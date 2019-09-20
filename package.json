@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A package for generating built files from multiple source files.",
   "main": "index.js",
+  "bin": {
+    "yml-builder": "index.js"
+  },
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
     "test-ci": "nyc --reporter=html --reporter=text mocha --recursive tests/",
@@ -31,5 +34,12 @@
   ],
   "directories": {
     "test": "tests"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "merge-yaml": "^1.0.0",
+    "recursive-readdir": "^2.2.2",
+    "yaml": "^1.6.0",
+    "yargs": "^14.0.0"
   }
 }
