@@ -3,23 +3,9 @@
 const assert = require('assert');
 const sandbox = require('sinon').createSandbox();
 const path = require('path');
-const fs = require('./../lib/promisified-fs'); // eslint-disable-line
+const fs = require('../lib/utils/promisified-fs'); // eslint-disable-line
 
 const { YmlBuilder, YmlBuilderError } = require('./../lib/index');
-
-const log = require('./../lib/log');
-
-const stubLogs = () => {
-	[
-		'message',
-		'error',
-		'warn',
-		'confirm'
-
-	].forEach(method => {
-		log[method] = sandbox.stub();
-	});
-};
 
 describe('YmlBuilder', () => {
 
@@ -28,7 +14,7 @@ describe('YmlBuilder', () => {
 	const outputPath = path.join(process.cwd(), 'output-path/output-file.yml');
 
 	beforeEach(() => {
-		stubLogs();
+		sandbox.stub(console, 'log').returns();
 	});
 
 	afterEach(() => {
@@ -325,7 +311,6 @@ describe('YmlBuilder', () => {
 
 			ymlBuilderMock.verify();
 			fsMock.verify();
-
 		});
 	});
 });
