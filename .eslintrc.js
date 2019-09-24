@@ -45,7 +45,7 @@ module.exports = {
 		'no-underscore-dangle': ['warn', {
 			allowAfterThis: true,
 			allowAfterSuper: true,
-			allow: ['_call', '__rootpath', '_where']
+			allow: ['_call', '__rootpath', '_where', '_isDirectory', '_validateInputPath', '_validateOutputPath', '_buildOutputDir', '_getSourceFiles']
 		}],
 
 		'no-tabs': 0,

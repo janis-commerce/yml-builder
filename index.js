@@ -3,18 +3,18 @@
 const { argv } = require('yargs')
 	.option('input', {
 		alias: 'i',
-		describe: 'relative dir for your input files folder',
+		describe: 'path to your sources directory',
 		type: 'string',
 		demandOption: true
 	})
 	.option('output', {
 		alias: 'o',
-		describe: 'relative path for the output file',
+		describe: 'path to the file that will be generated',
 		type: 'string',
 		demandOption: true
 	});
 
-const log = require('./lib/log');
+const log = require('./lib/utils/log');
 const { YmlBuilder } = require('./lib');
 
 (async () => {
@@ -26,7 +26,10 @@ const { YmlBuilder } = require('./lib');
 	try {
 
 		await ymlBuilder.execute();
+
 		log.confirm('', 'Operation completed successfully');
+
+		process.exit(0);
 
 	} catch(error) {
 
