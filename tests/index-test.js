@@ -1,13 +1,6 @@
 'use strict';
 
 const sandbox = require('sinon').createSandbox();
-const MockRequire = require('mock-require');
-
-class YmlBuilder {
-	async execute() {
-		return true;
-	}
-}
 
 // Simulating command parameters
 [
@@ -22,20 +15,21 @@ class YmlBuilder {
 
 describe('index', () => {
 
+	let YmlBuilder;
+
 	beforeEach(() => {
 		sandbox.stub(process, 'exit').returns();
 		sandbox.stub(console, 'log').returns();
-		MockRequire('./../lib', { YmlBuilder });
+		YmlBuilder = require('./../lib/yml-builder'); // eslint-disable-line
 	});
 
 	afterEach(() => {
 		sandbox.restore();
-		MockRequire.stopAll();
 		// clear node require caches
 		Object.keys(require.cache).forEach(key => { delete require.cache[key]; });
 	});
 
-	it('should run the index script without problems', () => {
+	it('should run the index script then call YmlBuilder.execute()', () => {
 
 		const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype)
 			.expects('execute')
@@ -46,7 +40,7 @@ describe('index', () => {
 		ymlBuilderMock.verify();
 	});
 
-	it('should run the index script without problems', () => {
+	it('should run the index script then call YmlBuilder.execute() and the operation fails', () => {
 
 		const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype)
 			.expects('execute')
