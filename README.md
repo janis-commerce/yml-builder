@@ -16,9 +16,11 @@ npx @janiscommerce/yml-builder -i sourceDir -o outputFile.yml
 ```
 
 ### Important:
-- The output file will be replaced if it exists.
-- The output directory will be recursively created if not exists.
-- If there is not any source files in the specified input directory, an empty file will be generated.
+- **The source files must be `.yml` or `.yaml` any other file types will be skipped.**
+- **The input path and output file path starts from the current working directory.**
+- **The output file will be replaced if it exists.**
+- **The output directory will be recursively created if not exists.**
+- **If there is not any source files in the specified input directory, an empty file will be generated.**
 
 ### Options:
 ```sh
@@ -30,4 +32,7 @@ npx @janiscommerce/yml-builder -i sourceDir -o outputFile.yml
 
 ```sh
 npx @janiscommerce/yml-builder -i permissions/src -o permissions/permissions.yml
+
+# Will get the source files from /path/to/root/permissions/src
+# Will generate the output file into /path/to/root/permissions/permissions.yml
 ```
