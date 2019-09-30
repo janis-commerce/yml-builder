@@ -41,5 +41,3 @@ const { YmlBuilder } = require('./lib');
 	}
 
 })();
-
-module.exports = YmlBuilder;
