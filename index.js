@@ -16,7 +16,7 @@ const { argv } = require('yargs')
 		demandOption: true
 	});
 
-const log = require('./lib/utils/log');
+const log = require('./lib/utils/lllog-wrapper');
 const { YmlBuilder } = require('./lib');
 
 (async () => {
@@ -29,13 +29,13 @@ const { YmlBuilder } = require('./lib');
 
 		await ymlBuilder.execute();
 
-		log.confirm('', 'Operation completed successfully');
+		log.confirm('Operation completed successfully', '✓ YML-BUILDER');
 
 		process.exit(0);
 
 	} catch(error) {
 
-		log.error(error.message, 'Operation failed');
+		log.error(error.message, 'Operation failed', '⨯ YML-BUILDER');
 
 		process.exit(1);
 	}

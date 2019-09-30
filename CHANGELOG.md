@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0] - 2019-09-27
 ### Added
 - `yml-builder` package
-- `promisified-fs` and `log` utils
+- `promisified-fs`
 - unit tests
 - documentation
+- `lllog` package
