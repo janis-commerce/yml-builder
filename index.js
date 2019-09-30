@@ -29,7 +29,7 @@ const { YmlBuilder } = require('./lib');
 
 		await ymlBuilder.execute();
 
-		log.confirm('', 'Operation completed successfully', '✓ YML-BUILDER');
+		log.confirm('Operation completed successfully', '✓ YML-BUILDER');
 
 		process.exit(0);
 
