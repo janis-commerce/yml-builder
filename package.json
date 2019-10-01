@@ -4,7 +4,7 @@
   "description": "A package for build a single yml file from multiple source files.",
   "main": "index.js",
   "bin": {
-    "yml-builder": "index.js"
+    "yml-builder": "run.js"
   },
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
