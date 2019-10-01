@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- `run.js` for autorun only with npx
+- usage as module support
+- api usage docs
+
+## [1.1.0] - 2019-09-27
+### Added
+- lllog package
+
+### Removed
+- log
+
+## [1.0.0] - 2019-09-27
+### Added
 - `yml-builder` package
 - `promisified-fs`
 - unit tests

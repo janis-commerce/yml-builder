@@ -10,7 +10,7 @@ A package for build a single yml file from multiple source files.
 npm install @janiscommerce/yml-builder
 ```
 
-## Usage
+## Usage (command line)
 ```sh
 npx @janiscommerce/yml-builder -i sourceDir -o outputFile.yml
 ```
@@ -35,4 +35,34 @@ npx @janiscommerce/yml-builder -i permissions/src -o permissions/permissions.yml
 
 # Will get the source files from /path/to/root/permissions/src
 # Will generate the output file into /path/to/root/permissions/permissions.yml
+```
+
+## Usage (as module)
+```js
+const YmlBuilder = require('@janiscommerce/yml-builder');
+```
+
+## API
+
+### **`new YmlBuilder(input, output)`**
+
+Constructs the YmlBuilder instance, configuring the `input [String]` and `output [String]` path.
+
+### **`async execute(input, output)`**
+
+Builds the ymls from the input path into the output file path.
+Optionally you can specify the `input [String]` and `output [String]` path, by default it will be obtained from the constructor config.
+
+## Examples
+
+```js
+const YmlBuilder = require('@janiscommerce/yml-builder');
+
+const ymlBuilder = new YmlBuilder('input-dir', 'output-file.yml');
+
+(async () => {
+
+	await ymlBuilder.execute(); // It will run the build process...
+
+})();
 ```
