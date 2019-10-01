@@ -20,7 +20,7 @@ describe('index', () => {
 	beforeEach(() => {
 		sandbox.stub(process, 'exit').returns();
 		sandbox.stub(console, 'log').returns();
-		YmlBuilder = require('./../lib/yml-builder'); // eslint-disable-line
+		YmlBuilder = require('./../index'); // eslint-disable-line
 	});
 
 	afterEach(() => {
@@ -35,7 +35,7 @@ describe('index', () => {
 			.expects('execute')
 			.returns();
 
-		const index = require('./../index'); // eslint-disable-line
+		const index = require('./../run'); // eslint-disable-line
 
 		ymlBuilderMock.verify();
 	});
@@ -46,7 +46,7 @@ describe('index', () => {
 			.expects('execute')
 			.rejects();
 
-		const index = require('./../index'); // eslint-disable-line
+		const index = require('./../run'); // eslint-disable-line
 
 		ymlBuilderMock.verify();
 	});
