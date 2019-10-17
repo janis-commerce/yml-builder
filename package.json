@@ -2,9 +2,9 @@
   "name": "@janiscommerce/yml-builder",
   "version": "2.0.0",
   "description": "A package for build a single yml file from multiple source files.",
-  "main": "index.js",
+  "main": "lib/yml-builder.js",
   "bin": {
-    "yml-builder": "run.js"
+    "yml-builder": "index.js"
   },
   "scripts": {
     "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",

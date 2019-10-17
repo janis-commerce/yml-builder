@@ -20,7 +20,7 @@ npx @janiscommerce/yml-builder -i sourceDir -o outputFile.yml
 - **The input path and output file path starts from the current working directory.**
 - **The output file will be replaced if it exists.**
 - **The output directory will be recursively created if not exists.**
-- **If there is not any source files in the specified input directory, an empty file will be generated.**
+- **If there is not any source files in the specified input directory or not exists, an empty file will be generated.**
 
 ### Options:
 ```sh
