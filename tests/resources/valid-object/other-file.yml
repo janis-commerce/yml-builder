@@ -1,0 +1,5 @@
+some-item:
+  new-property: 'new-property'
+
+new-item:
+  property: 'new-property'

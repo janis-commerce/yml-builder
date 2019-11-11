@@ -3,326 +3,130 @@
 const assert = require('assert');
 const sandbox = require('sinon').createSandbox();
 const path = require('path');
-const fs = require('../lib/utils/promisified-fs'); // eslint-disable-line
+const yaml = require('yaml');
+const recursive = require('recursive-readdir');
+const fs = require('../lib/utils/promisified-fs');
 
-const YmlBuilder = require('./../lib/yml-builder');
-const YmlBuilderError = require('./../lib/yml-builder-error');
+const YmlBuilder = require('../lib/yml-builder');
+const YmlBuilderError = require('../lib/yml-builder-error');
+
+require('lllog')('none');
 
 describe('YmlBuilder', () => {
 
-	const ymlBuilder = new YmlBuilder('input-path', 'output-path/output-file.yml');
-	const inputPath = path.join(process.cwd(), 'input-path');
-	const outputPath = path.join(process.cwd(), 'output-path/output-file.yml');
-	const outputPathParentDir = path.parse(outputPath).dir;
+	const basePath = path.join('tests', 'resources');
+	const outputPath = path.join(basePath, 'output.yml');
 
-	beforeEach(() => {
-		sandbox.stub(console, 'log').returns();
-	});
+	const getParentDir = dirPath => path.parse(dirPath).dir;
+
+	const getPath = targetPath => path.join(basePath, targetPath);
 
 	afterEach(() => {
 		sandbox.restore();
 	});
 
-	describe('_isDirectory()', () => {
-
-		it('should return true when the specified path is a directory', async () => {
-
-			const statMock = sandbox.mock(fs).expects('stat')
-				.withExactArgs(inputPath)
-				.returns({
-					isDirectory: () => true
-				});
-
-			assert.deepStrictEqual(await ymlBuilder._isDirectory(inputPath), true);
-
-			statMock.verify();
-		});
-
-		it('should return false when the specified path is not a directory', async () => {
-
-			const statMock = sandbox.mock(fs).expects('stat')
-				.withExactArgs(inputPath)
-				.returns({
-					isDirectory: () => false
-				});
-
-			assert.deepStrictEqual(await ymlBuilder._isDirectory(inputPath), false);
-
-			statMock.verify();
-		});
-
-		it('should return false when the directory not exists', async () => {
-
-			const statMock = sandbox.mock(fs).expects('stat')
-				.withExactArgs(inputPath)
-				.rejects();
-
-			assert.deepStrictEqual(await ymlBuilder._isDirectory(inputPath), false);
-
-			statMock.verify();
-		});
-	});
-
-	describe('_validateOutputPath()', () => {
-
-		it('should not reject when the output file is a yaml file', async () => {
-
-			const isDirectoryMock = sandbox.mock(YmlBuilder.prototype).expects('_isDirectory')
-				.withExactArgs(outputPathParentDir)
-				.returns(true);
-
-			await assert.doesNotReject(ymlBuilder._validateOutputPath(outputPath));
-
-			isDirectoryMock.verify();
-		});
-
-		it('should reject when the output file is not a yaml file', async () => {
-
-			await assert.rejects(ymlBuilder._validateOutputPath('not-an-yml.txt'), {
-				name: 'YmlBuilderError',
-				code: YmlBuilderError.codes.INVALID_OUTPUT_FILE
-			});
-		});
-
-		it('should create the output directory when not exists', async () => {
-
-			const isDirectoryMock = sandbox.mock(YmlBuilder.prototype).expects('_isDirectory')
-				.withExactArgs(outputPathParentDir)
-				.returns(false);
-
-			const buildOutputDirMock = sandbox.mock(YmlBuilder.prototype).expects('_buildOutputDir')
-				.withExactArgs(outputPathParentDir)
-				.returns();
-
-			await assert.doesNotReject(ymlBuilder._validateOutputPath(outputPath));
-
-			isDirectoryMock.verify();
-			buildOutputDirMock.verify();
-		});
-	});
-
-	describe('_buildOutputDir()', () => {
-
-		it('should create the output directory recursively', async () => {
-
-			const mkdirMock = sandbox.mock(fs).expects('mkdir')
-				.withExactArgs(outputPath, { recursive: true })
-				.returns();
-
-			await assert.doesNotReject(ymlBuilder._buildOutputDir(outputPath));
-
-			mkdirMock.verify();
-		});
-
-		it('should reject when the mkdir rejects', async () => {
-
-			const mkdirMock = sandbox.mock(fs).expects('mkdir')
-				.withExactArgs(outputPath, { recursive: true })
-				.rejects();
-
-			await assert.rejects(ymlBuilder._buildOutputDir(outputPath), {
-				name: 'YmlBuilderError',
-				code: YmlBuilderError.codes.INVALID_OUTPUT_PATH
-			});
-
-			mkdirMock.verify();
-		});
-	});
-
-	describe('_getSourceFiles()', () => {
-
-		it('should return only the yml files from the input dir recursively', async () => {
-
-			const fsMock = sandbox.mock(fs);
-
-			fsMock.expects('readdir').withArgs(inputPath)
-				.yields(null, [
-					'some-file.yml',
-					'random-file.txt',
-					'more-files'
-				]);
-
-			fsMock.expects('readdir').withArgs(path.join(inputPath, 'more-files'))
-				.yields(null, [
-					'other-file.yml'
-				]);
-
-			fsMock.expects('stat').withArgs(path.join(inputPath, 'some-file.yml'))
-				.yields(null, {
-					isDirectory: () => false
-				});
-
-			fsMock.expects('stat').withArgs(path.join(inputPath, 'random-file.txt'))
-				.yields(null, {
-					isDirectory: () => false
-				});
-
-			fsMock.expects('stat').withArgs(path.join(inputPath, 'more-files'))
-				.yields(null, {
-					isDirectory: () => true
-				});
-
-			fsMock.expects('stat').withArgs(path.join(inputPath, 'more-files', 'other-file.yml'))
-				.yields(null, {
-					isDirectory: () => false
-				});
-
-			const isDirectoryMock = sandbox.mock(YmlBuilder.prototype).expects('_isDirectory')
-				.withExactArgs(inputPath)
-				.returns(true);
-
-			assert.deepStrictEqual(await ymlBuilder._getSourceFiles(inputPath), [
-				path.join(inputPath, 'some-file.yml'),
-				path.join(inputPath, 'more-files', 'other-file.yml')
-			]);
-
-			fsMock.verify();
-			isDirectoryMock.verify();
-		});
-
-		it('should reject when the fs process fails', async () => {
-
-			const isDirectoryMock = sandbox.mock(YmlBuilder.prototype).expects('_isDirectory')
-				.withExactArgs(inputPath)
-				.returns(true);
-
-			const fsMock = sandbox.mock(fs).expects('readdir')
-				.withArgs(inputPath)
-				.yields(new Error('FS ERROR'));
-
-			await assert.rejects(ymlBuilder._getSourceFiles(inputPath), {
-				name: 'YmlBuilderError',
-				code: YmlBuilderError.codes.READ_FILES_ERROR
-			});
-
-			fsMock.verify();
-			isDirectoryMock.verify();
-		});
-
-		it('should return an empty array when the received input dir not exists', async () => {
-
-			const readdirSpy = sandbox.spy(fs, 'readdir');
-
-			const isDirectoryMock = sandbox.mock(YmlBuilder.prototype).expects('_isDirectory')
-				.withExactArgs(inputPath)
-				.returns(false);
-
-			assert.deepStrictEqual(await ymlBuilder._getSourceFiles(inputPath), []);
-
-			isDirectoryMock.verify();
-			sandbox.assert.notCalled(readdirSpy);
-		});
-	});
-
 	describe('execute()', () => {
 
-		it('should build the ymls from the input folder into the output file', async () => {
+		it('Should build an array yaml when the received files are array ymls', async () => {
 
-			const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype);
-			const fsMock = sandbox.mock(fs);
+			const ymlBuilder = new YmlBuilder(getPath('valid-array'), outputPath);
 
-			// Generating a fake input-path
-			fsMock.expects('stat')
-				.withExactArgs(inputPath)
-				.twice()
-				.returns({
-					isDirectory: () => true
-				});
+			await ymlBuilder.execute();
 
-			// _validateOutputPath will check if the output file directory exists
-			fsMock.expects('stat')
-				.withExactArgs(outputPathParentDir)
-				.returns({
-					isDirectory: () => true
-				});
+			const output = await fs.readFile(outputPath, 'utf8');
 
-			// _getSourceFiles will read recursively the input directory (using callback)
-			fsMock.expects('readdir')
-				.withArgs(inputPath)
-				.yields(null, [
-					'some-file.yml',
-					'other-file.yml'
-				]);
-
-			// _getSourceFiles will check recursively if everything that readdir returns is a directory (using callback)
-			fsMock.expects('stat')
-				.withArgs(path.join(inputPath, 'some-file.yml'))
-				.yields(null, {
-					isDirectory: () => false
-				});
-
-			fsMock.expects('stat')
-				.withArgs(path.join(inputPath, 'other-file.yml'))
-				.yields(null, {
-					isDirectory: () => false
-				});
-
-			// mergeYaml will read all the received files
-			fsMock.expects('readFileSync')
-				.withExactArgs(path.join(inputPath, 'some-file.yml'), 'utf8')
-				.returns('property: value');
-
-			fsMock.expects('readFileSync')
-				.withExactArgs(path.join(inputPath, 'other-file.yml'), 'utf8')
-				.returns('otherProperty: value');
-
-			// execute() will write the mergedYaml result into the output file
-			fsMock.expects('writeFile')
-				.withExactArgs(outputPath, 'property: value\notherProperty: value\n', { recursive: true })
-				.returns();
-
-			await assert.doesNotReject(ymlBuilder.execute());
-
-			ymlBuilderMock.verify();
-			fsMock.verify();
+			assert.deepStrictEqual(yaml.parse(output), [
+				{ 'new-item': 'new-property' },
+				{ 'some-item': 'some-property' },
+				{ 'other-item': 'other-property' }
+			]);
 		});
 
-		it('should reject when the yml build fails', async () => {
+		it('Should build an object yaml when the received files are object ymls', async () => {
 
-			const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype);
+			const ymlBuilder = new YmlBuilder(getPath('valid-object'), outputPath);
 
-			ymlBuilderMock.expects('_validateOutputPath')
-				.withExactArgs(outputPath)
-				.returns();
+			await ymlBuilder.execute();
 
-			ymlBuilderMock.expects('_getSourceFiles')
-				.withExactArgs(inputPath)
-				.rejects();
+			const output = await fs.readFile(outputPath, 'utf8');
+
+			assert.deepStrictEqual(yaml.parse(output), {
+				'some-item': {
+					property: 'some-property',
+					'new-property': 'new-property'
+				},
+				'other-item': {
+					property: 'other-property'
+				},
+				'new-item': {
+					property: 'new-property'
+				}
+			});
+		});
+
+		it('Should build an empty output file when the received files are empty', async () => {
+
+			const ymlBuilder = new YmlBuilder(getPath('valid-empty'), outputPath);
+
+			await ymlBuilder.execute();
+
+			const output = await fs.readFile(outputPath, 'utf8');
+
+			assert.deepStrictEqual(yaml.parse(output), null);
+		});
+
+		it('Should build an empty output file when the received input dir not exists', async () => {
+
+			const ymlBuilder = new YmlBuilder(getPath('fake-dir'), outputPath);
+
+			await ymlBuilder.execute();
+
+			const output = await fs.readFile(outputPath, 'utf8');
+
+			assert.deepStrictEqual(yaml.parse(output), null);
+		});
+
+		it('Should build an empty output file when the received input dir is empty', async () => {
+
+			const ymlBuilder = new YmlBuilder(getPath('empty-input'), outputPath);
+
+			await ymlBuilder.execute();
+
+			const output = await fs.readFile(outputPath, 'utf8');
+
+			assert.deepStrictEqual(yaml.parse(output), null);
+		});
+
+		it('Should reject when the received files includes array and object ymls mixed', async () => {
+
+			const ymlBuilder = new YmlBuilder(getPath('invalid'), outputPath);
 
 			await assert.rejects(ymlBuilder.execute(), {
 				name: 'YmlBuilderError',
 				code: YmlBuilderError.codes.YML_BUILD_ERROR
 			});
 
-			ymlBuilderMock.verify();
+			const files = await fs.readdir(getPath('invalid'));
+
+			const readdirMock = sandbox.mock(fs)
+				.expects('readdir')
+				.yields(null, files.reverse());
+
+			await assert.rejects(ymlBuilder.execute(), {
+				name: 'YmlBuilderError',
+				code: YmlBuilderError.codes.YML_BUILD_ERROR
+			});
+
+			readdirMock.verify();
+			readdirMock.calledWithExactly(path.join(process.cwd(), getPath('invalid')));
 		});
 
-		it('should reject when the output file write process fails', async () => {
+		it('Should reject when can\'t write the output file', async () => {
 
-			const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype);
-			const fsMock = sandbox.mock(fs);
+			const ymlBuilder = new YmlBuilder(getPath('valid-array'), outputPath);
 
-			ymlBuilderMock.expects('_validateOutputPath')
-				.withExactArgs(outputPath)
-				.returns();
-
-			ymlBuilderMock.expects('_getSourceFiles')
-				.withExactArgs(inputPath)
-				.returns([
-					path.join(inputPath, 'some-file.yml'),
-					path.join(inputPath, 'other-file.yml')
-				]);
-
-			fsMock.expects('readFileSync')
-				.withExactArgs(path.join(inputPath, 'some-file.yml'), 'utf8')
-				.returns('property: value');
-
-			fsMock.expects('readFileSync')
-				.withExactArgs(path.join(inputPath, 'other-file.yml'), 'utf8')
-				.returns('otherProperty: value');
-
-			fsMock.expects('writeFile')
-				.withExactArgs(outputPath, 'property: value\notherProperty: value\n', { recursive: true })
+			const writeFileMock = sandbox.mock(fs)
+				.expects('writeFile')
 				.rejects();
 
 			await assert.rejects(ymlBuilder.execute(), {
@@ -330,32 +134,25 @@ describe('YmlBuilder', () => {
 				code: YmlBuilderError.codes.WRITE_OUTPUT_FILE_ERROR
 			});
 
-			ymlBuilderMock.verify();
-			fsMock.verify();
+			writeFileMock.verify();
+			writeFileMock.calledWithMatch(outputPath, sandbox.match.string, { recursive: true });
 		});
 
-		it('should not reject when the input directory not exists', async () => {
+		it('Should reject when can\'t read the input directory files', async () => {
 
-			const ymlBuilderMock = sandbox.mock(YmlBuilder.prototype);
-			const fsMock = sandbox.mock(fs);
+			const ymlBuilder = new YmlBuilder(getPath('valid-array'), outputPath);
 
-			ymlBuilderMock.expects('_isDirectory')
-				.withExactArgs(inputPath)
-				.twice()
-				.returns(false);
+			const readdirMock = sandbox.mock(fs)
+				.expects('readdir')
+				.throws();
 
-			ymlBuilderMock.expects('_validateOutputPath')
-				.withExactArgs(outputPath)
-				.returns();
+			await assert.rejects(ymlBuilder.execute(), {
+				name: 'YmlBuilderError',
+				code: YmlBuilderError.codes.READ_FILES_ERROR
+			});
 
-			fsMock.expects('writeFile')
-				.withExactArgs(outputPath, '\n', { recursive: true })
-				.returns();
-
-			await assert.doesNotReject(ymlBuilder.execute());
-
-			ymlBuilderMock.verify();
-			fsMock.verify();
+			readdirMock.verify();
+			readdirMock.calledWithExactly(path.join(process.cwd(), getPath('valid-array')));
 		});
 	});
 });
